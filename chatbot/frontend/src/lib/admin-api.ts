@@ -1,10 +1,11 @@
 // Typed client for the FastAPI admin backend. Stores the JWT in localStorage
 // and attaches it as a Bearer token; on 401 it clears the token and bounces
 // to the login page.
-
-const API_BASE = (
-  import.meta.env.VITE_ADMIN_API_URL ?? "http://localhost:8010"
-).replace(/\/$/, "");
+//
+// All requests go to the same-origin `/api/...` prefix (dev: Vite proxy,
+// prod: nginx proxy -> :8010). Override only for special setups via
+// VITE_ADMIN_API_URL (e.g. an absolute backend URL on another host).
+const API_BASE = (import.meta.env.VITE_ADMIN_API_URL ?? "").replace(/\/$/, "");
 
 const TOKEN_KEY = "labi.adminToken";
 
