@@ -56,6 +56,34 @@ export interface LoginResult {
   admin: Admin;
 }
 
+// --- Dev Center: live DB schema ---
+export interface SchemaColumn {
+  name: string;
+  type: string;
+  key: "" | "PK" | "FK" | "UQ";
+  nullable: boolean;
+  defaultValue: string | null;
+  description: string;
+}
+
+export interface SchemaTable {
+  tableName: string;
+  description: string;
+  columns: SchemaColumn[];
+}
+
+export interface ErdRelation {
+  fromTable: string;
+  fromColumn: string;
+  toTable: string;
+  toColumn: string;
+}
+
+export interface ErdResponse {
+  tables: SchemaTable[];
+  relations: ErdRelation[];
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -160,4 +188,6 @@ export const adminApi = {
     }),
   deleteUser: (id: number) =>
     request<void>(`/api/admin/users/${id}`, { method: "DELETE" }),
+  getTables: () => request<SchemaTable[]>("/api/admin/dev/tables"),
+  getErd: () => request<ErdResponse>("/api/admin/dev/erd"),
 };

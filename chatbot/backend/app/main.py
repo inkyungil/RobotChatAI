@@ -2,11 +2,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import auth, dashboard, users
+from .routers import auth, dashboard, dev, users
 
 settings = get_settings()
 
-app = FastAPI(title="RobotChatAI Admin API", version="0.1.0")
+# Serve OpenAPI/Swagger under the same-origin /api prefix so nginx proxies them
+# and the Dev Center "API 문서" page can embed /api/docs.
+app = FastAPI(
+    title="RobotChatAI Admin API",
+    version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +27,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
+app.include_router(dev.router)
 
 
 @app.get("/api/health", tags=["health"])

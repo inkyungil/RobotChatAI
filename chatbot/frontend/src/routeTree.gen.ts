@@ -20,6 +20,11 @@ import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminAuthedRouteImport } from './routes/admin/_authed'
 import { Route as AdminAuthedIndexRouteImport } from './routes/admin/_authed/index'
 import { Route as AdminAuthedUsersRouteImport } from './routes/admin/_authed/users'
+import { Route as AdminAuthedDevTablesRouteImport } from './routes/admin/_authed/dev/tables'
+import { Route as AdminAuthedDevServerOpsRouteImport } from './routes/admin/_authed/dev/server-ops'
+import { Route as AdminAuthedDevErdRouteImport } from './routes/admin/_authed/dev/erd'
+import { Route as AdminAuthedDevArchitectureRouteImport } from './routes/admin/_authed/dev/architecture'
+import { Route as AdminAuthedDevApiDocsRouteImport } from './routes/admin/_authed/dev/api-docs'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -76,6 +81,32 @@ const AdminAuthedUsersRoute = AdminAuthedUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminAuthedRoute,
 } as any)
+const AdminAuthedDevTablesRoute = AdminAuthedDevTablesRouteImport.update({
+  id: '/dev/tables',
+  path: '/dev/tables',
+  getParentRoute: () => AdminAuthedRoute,
+} as any)
+const AdminAuthedDevServerOpsRoute = AdminAuthedDevServerOpsRouteImport.update({
+  id: '/dev/server-ops',
+  path: '/dev/server-ops',
+  getParentRoute: () => AdminAuthedRoute,
+} as any)
+const AdminAuthedDevErdRoute = AdminAuthedDevErdRouteImport.update({
+  id: '/dev/erd',
+  path: '/dev/erd',
+  getParentRoute: () => AdminAuthedRoute,
+} as any)
+const AdminAuthedDevArchitectureRoute =
+  AdminAuthedDevArchitectureRouteImport.update({
+    id: '/dev/architecture',
+    path: '/dev/architecture',
+    getParentRoute: () => AdminAuthedRoute,
+  } as any)
+const AdminAuthedDevApiDocsRoute = AdminAuthedDevApiDocsRouteImport.update({
+  id: '/dev/api-docs',
+  path: '/dev/api-docs',
+  getParentRoute: () => AdminAuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +120,11 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/users': typeof AdminAuthedUsersRoute
   '/admin/': typeof AdminAuthedIndexRoute
+  '/admin/dev/api-docs': typeof AdminAuthedDevApiDocsRoute
+  '/admin/dev/architecture': typeof AdminAuthedDevArchitectureRoute
+  '/admin/dev/erd': typeof AdminAuthedDevErdRoute
+  '/admin/dev/server-ops': typeof AdminAuthedDevServerOpsRoute
+  '/admin/dev/tables': typeof AdminAuthedDevTablesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +137,11 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/users': typeof AdminAuthedUsersRoute
   '/admin': typeof AdminAuthedIndexRoute
+  '/admin/dev/api-docs': typeof AdminAuthedDevApiDocsRoute
+  '/admin/dev/architecture': typeof AdminAuthedDevArchitectureRoute
+  '/admin/dev/erd': typeof AdminAuthedDevErdRoute
+  '/admin/dev/server-ops': typeof AdminAuthedDevServerOpsRoute
+  '/admin/dev/tables': typeof AdminAuthedDevTablesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +156,11 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/_authed/users': typeof AdminAuthedUsersRoute
   '/admin/_authed/': typeof AdminAuthedIndexRoute
+  '/admin/_authed/dev/api-docs': typeof AdminAuthedDevApiDocsRoute
+  '/admin/_authed/dev/architecture': typeof AdminAuthedDevArchitectureRoute
+  '/admin/_authed/dev/erd': typeof AdminAuthedDevErdRoute
+  '/admin/_authed/dev/server-ops': typeof AdminAuthedDevServerOpsRoute
+  '/admin/_authed/dev/tables': typeof AdminAuthedDevTablesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +176,11 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/users'
     | '/admin/'
+    | '/admin/dev/api-docs'
+    | '/admin/dev/architecture'
+    | '/admin/dev/erd'
+    | '/admin/dev/server-ops'
+    | '/admin/dev/tables'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,6 +193,11 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/users'
     | '/admin'
+    | '/admin/dev/api-docs'
+    | '/admin/dev/architecture'
+    | '/admin/dev/erd'
+    | '/admin/dev/server-ops'
+    | '/admin/dev/tables'
   id:
     | '__root__'
     | '/'
@@ -155,6 +211,11 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/_authed/users'
     | '/admin/_authed/'
+    | '/admin/_authed/dev/api-docs'
+    | '/admin/_authed/dev/architecture'
+    | '/admin/_authed/dev/erd'
+    | '/admin/_authed/dev/server-ops'
+    | '/admin/_authed/dev/tables'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -248,17 +309,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuthedUsersRouteImport
       parentRoute: typeof AdminAuthedRoute
     }
+    '/admin/_authed/dev/tables': {
+      id: '/admin/_authed/dev/tables'
+      path: '/dev/tables'
+      fullPath: '/admin/dev/tables'
+      preLoaderRoute: typeof AdminAuthedDevTablesRouteImport
+      parentRoute: typeof AdminAuthedRoute
+    }
+    '/admin/_authed/dev/server-ops': {
+      id: '/admin/_authed/dev/server-ops'
+      path: '/dev/server-ops'
+      fullPath: '/admin/dev/server-ops'
+      preLoaderRoute: typeof AdminAuthedDevServerOpsRouteImport
+      parentRoute: typeof AdminAuthedRoute
+    }
+    '/admin/_authed/dev/erd': {
+      id: '/admin/_authed/dev/erd'
+      path: '/dev/erd'
+      fullPath: '/admin/dev/erd'
+      preLoaderRoute: typeof AdminAuthedDevErdRouteImport
+      parentRoute: typeof AdminAuthedRoute
+    }
+    '/admin/_authed/dev/architecture': {
+      id: '/admin/_authed/dev/architecture'
+      path: '/dev/architecture'
+      fullPath: '/admin/dev/architecture'
+      preLoaderRoute: typeof AdminAuthedDevArchitectureRouteImport
+      parentRoute: typeof AdminAuthedRoute
+    }
+    '/admin/_authed/dev/api-docs': {
+      id: '/admin/_authed/dev/api-docs'
+      path: '/dev/api-docs'
+      fullPath: '/admin/dev/api-docs'
+      preLoaderRoute: typeof AdminAuthedDevApiDocsRouteImport
+      parentRoute: typeof AdminAuthedRoute
+    }
   }
 }
 
 interface AdminAuthedRouteChildren {
   AdminAuthedUsersRoute: typeof AdminAuthedUsersRoute
   AdminAuthedIndexRoute: typeof AdminAuthedIndexRoute
+  AdminAuthedDevApiDocsRoute: typeof AdminAuthedDevApiDocsRoute
+  AdminAuthedDevArchitectureRoute: typeof AdminAuthedDevArchitectureRoute
+  AdminAuthedDevErdRoute: typeof AdminAuthedDevErdRoute
+  AdminAuthedDevServerOpsRoute: typeof AdminAuthedDevServerOpsRoute
+  AdminAuthedDevTablesRoute: typeof AdminAuthedDevTablesRoute
 }
 
 const AdminAuthedRouteChildren: AdminAuthedRouteChildren = {
   AdminAuthedUsersRoute: AdminAuthedUsersRoute,
   AdminAuthedIndexRoute: AdminAuthedIndexRoute,
+  AdminAuthedDevApiDocsRoute: AdminAuthedDevApiDocsRoute,
+  AdminAuthedDevArchitectureRoute: AdminAuthedDevArchitectureRoute,
+  AdminAuthedDevErdRoute: AdminAuthedDevErdRoute,
+  AdminAuthedDevServerOpsRoute: AdminAuthedDevServerOpsRoute,
+  AdminAuthedDevTablesRoute: AdminAuthedDevTablesRoute,
 }
 
 const AdminAuthedRouteWithChildren = AdminAuthedRoute._addFileChildren(

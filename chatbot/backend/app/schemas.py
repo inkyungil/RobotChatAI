@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic.alias_generators import to_camel
 
 from .models import AdminRole
 
@@ -64,3 +65,37 @@ class DashboardStats(BaseModel):
     selected_model: str | None = None
     conversations_per_day: list[DayCount]
     recent_admins: list[AdminOut]
+
+
+# --- Dev Center: schema introspection (camelCase JSON for the frontend) ---
+
+
+class _CamelModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+
+
+class SchemaColumn(_CamelModel):
+    name: str
+    type: str
+    key: str = ""  # "PK" | "FK" | "UQ" | ""
+    nullable: bool
+    default_value: str | None = None
+    description: str = ""
+
+
+class SchemaTable(_CamelModel):
+    table_name: str
+    description: str = ""
+    columns: list[SchemaColumn]
+
+
+class ErdRelation(_CamelModel):
+    from_table: str
+    from_column: str
+    to_table: str
+    to_column: str
+
+
+class ErdResponse(_CamelModel):
+    tables: list[SchemaTable]
+    relations: list[ErdRelation]
