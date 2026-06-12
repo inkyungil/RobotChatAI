@@ -10,7 +10,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 export const Route = createFileRoute("/chat")({
-  head: () => ({ meta: [{ title: "Labi Bot — Labi Bot 챗봇" }] }),
+  head: () => ({ meta: [{ title: "Libi Bot — Libi Bot 챗봇" }] }),
   component: ChatPage,
 });
 
@@ -30,6 +30,7 @@ async function askLocalLlm(
   input: string,
   lang: "KR" | "EN" | "ZH" | "VI",
   model: string,
+  booksContext?: string,
   onToken?: (fullText: string) => void,
 ) {
   const languageName = {
@@ -50,11 +51,12 @@ async function askLocalLlm(
         {
           role: "system",
           content: [
-            "You are Labi Bot, a helpful AI guide for a bookstore app.",
+            "You are Libi Bot, a helpful AI guide for a library app.",
             "You MUST write every reply only in " + languageName + ", regardless of the language the user writes in.",
             "Never answer in any other language.",
             "Keep answers concise and practical.",
-            "If the user asks about books, recommend concrete titles or ask for the title or genre.",
+            booksContext ? `Here is the current real-time library database containing books relevant to the user's query:\n${booksContext}\nAlways use this real database information to recommend books. If the user asks for loanable books (대출 가능한 책), recommend only the books in this list that have '대출 가능' status. Never recommend books that are not in the database if the user is asking for real books. Include their location (zone and shelf) in the response.` : "",
+            "If the user asks about books, recommend concrete titles from the database list above or ask for the title or genre.",
             "If the user asks about facilities or shelf location, give a short directional answer.",
           ].join(" "),
         },
@@ -132,7 +134,7 @@ export function makeReply(input: string, lang: "KR" | "EN" | "ZH" | "VI"): { tex
     return {
       text:
         lang === "KR"
-          ? "오늘 재고 있는 경제 신간으로는 『트렌드 코리아 2026』(E-1 첫째 줄)이 있어요."
+          ? "오늘 대출 가능한 경제 신간으로는 『트렌드 코리아 2026』(E-1 첫째 줄)이 있어요."
           : "'Trend Korea 2026' (E-1) is in stock today.",
     };
   }
@@ -142,7 +144,7 @@ export function makeReply(input: string, lang: "KR" | "EN" | "ZH" | "VI"): { tex
     return {
       text:
         lang === "KR"
-          ? `『${found.title.KR}』은(는) ${found.zone} ${found.shelf}에 있어요. ${found.inStock ? "재고 있음 ✅" : "현재 품절입니다."}`
+          ? `『${found.title.KR}』은(는) ${found.zone} ${found.shelf}에 있어요. ${found.inStock ? "대출 가능 ✅" : "현재 대출 중입니다."}`
           : `'${found.title[lang]}' is at ${found.zone}. ${found.inStock ? "In stock." : "Sold out."}`,
       showMap: found.inStock,
     };
@@ -189,12 +191,12 @@ function MessageMarkdown({ text }: { text: string }) {
 
 function greetingFor(lang: "KR" | "EN" | "ZH" | "VI") {
   return lang === "KR"
-    ? "안녕하세요! 저는 서점 가이드 Labi Bot이에요. 책 제목, 장르, 또는 시설 위치 무엇이든 물어봐 주세요 😊"
+    ? "안녕하세요! 저는 도서관 가이드 Libi Bot이에요. 책 제목, 장르, 또는 시설 위치 무엇이든 물어봐 주세요 😊"
     : lang === "EN"
-      ? "Hi! I'm Labi Bot, your bookstore guide. Ask me about any book, topic or facility."
+      ? "Hi! I'm Libi Bot, your library guide. Ask me about any book, topic or facility."
       : lang === "ZH"
-        ? "您好,我是书店向导 Labi Bot,请随意询问任何书籍或设施。"
-        : "Xin chào! Tôi là Labi Bot, hướng dẫn viên nhà sách.";
+        ? "您好,我是书店向导 Libi Bot,请随意询问任何书籍或设施。"
+        : "Xin chào! Tôi là Libi Bot, hướng dẫn viên nhà sách.";
 }
 
 function ChatPage() {
@@ -245,17 +247,55 @@ function ChatPage() {
       {
         id: pendingId,
         role: "bot",
-        text: lang === "KR" ? "Labi Bot이 로컬 LLM으로 답변을 작성 중이에요..." : "Labi Bot is thinking locally...",
+        text: lang === "KR" ? "Libi Bot이 로컬 LLM으로 답변을 작성 중이에요..." : "Libi Bot is thinking locally...",
         pending: true,
       },
     ]);
     setInput("");
 
+    // Fetch database books for RAG context
+    let dbBooks: any[] = [];
+    try {
+      const res = await fetch("/api/books");
+      if (res.ok) {
+        dbBooks = await res.json();
+      }
+    } catch (e) {
+      console.error("Failed to fetch books from DB", e);
+    }
+
+    // Filter books based on query keywords
+    let relevantBooks = dbBooks;
+    const q = text.toLowerCase();
+    
+    if (q.includes("경제") || q.includes("finance") || q.includes("economy") || q.includes("돈") || q.includes("주식")) {
+      relevantBooks = dbBooks.filter(b => b.category === "경제" || b.category?.includes("경제") || b.title.KR.includes("경제"));
+    } else if (q.includes("소설") || q.includes("novel") || q.includes("문학")) {
+      relevantBooks = dbBooks.filter(b => b.category === "소설" || b.category?.includes("소설"));
+    } else if (q.includes("자기계발") || q.includes("self") || q.includes("성공")) {
+      relevantBooks = dbBooks.filter(b => b.category === "자기계발" || b.category?.includes("자기계발"));
+    } else if (q.includes("외국") || q.includes("foreign") || q.includes("영어")) {
+      relevantBooks = dbBooks.filter(b => b.category === "외국도서" || b.category?.includes("외국"));
+    } else {
+      // search title or author
+      relevantBooks = dbBooks.filter(b => 
+        b.title.KR.toLowerCase().includes(q) || 
+        b.author.toLowerCase().includes(q)
+      );
+    }
+
+    const maxContextBooks = relevantBooks.slice(0, 15);
+    const booksContext = maxContextBooks.length > 0 
+      ? maxContextBooks.map(b => 
+          `- 제목: ${b.title.KR}, 저자: ${b.author}, 카테고리: ${b.category}, 위치: ${b.zone} 구역 (${b.shelf}), 대출상태: ${b.inStock ? "대출 가능" : "대출 중"}`
+        ).join("\n")
+      : "";
+
     try {
       const model = getSelectedOllamaModel();
       const showMap = /(화장실|restroom|toilet|지도|map|洗手|地图|vệ sinh|bản đồ)/i.test(text);
       // stream tokens in as they arrive (typing effect)
-      await askLocalLlm(text, lang, model, (full) => {
+      await askLocalLlm(text, lang, model, booksContext, (full) => {
         setMessages((m) =>
           m.map((msg) => (msg.id === pendingId ? { ...msg, text: full, pending: false } : msg)),
         );
@@ -266,23 +306,54 @@ function ChatPage() {
       if (showMap) setTimeout(() => setMapOpen(true), 400);
     } catch (error) {
       console.error(error);
-      const reply = makeReply(text, lang);
+      
+      // Smart local search fallback using DB books
+      let fallbackText = "";
+      let showMap = false;
+
+      if (dbBooks.length > 0) {
+        if (q.includes("경제") || q.includes("finance") || q.includes("economy")) {
+          const economics = dbBooks.filter(b => (b.category === "경제" || b.category?.includes("경제")) && b.inStock);
+          if (economics.length > 0) {
+            fallbackText = `📚 오늘 대출 가능한 경제 서적 중 인기 있는 책들을 추천합니다:\n\n` + 
+              economics.slice(0, 3).map(b => `• **"${b.title.KR}"** (${b.author}) - 위치: ${b.zone} 구역 (${b.shelf})`).join("\n") +
+              `\n\n원하시면 도서 검색 메뉴에서 직접 책을 검색해 로봇을 호출하거나, 특정 분야 또는 최근 도서를 알려주세요!`;
+          } else {
+            fallbackText = `오늘 대출 가능한 경제 서적이 도서관에 남아있지 않습니다.`;
+          }
+        } else {
+          // general book match
+          const found = dbBooks.find(b => b.title.KR.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+          if (found) {
+            fallbackText = `『${found.title.KR}』 (${found.author})은(는) 현재 ${found.zone} 구역 서가(${found.shelf})에 위치하고 있으며, ${found.inStock ? "대출 가능 ✅" : "대출 중 ❌"} 상태입니다.`;
+            showMap = found.inStock;
+          }
+        }
+      }
+
+      if (!fallbackText) {
+        const reply = makeReply(text, lang);
+        fallbackText = reply.text;
+        showMap = reply.showMap;
+      }
+
       const suffix =
         lang === "KR"
-          ? "(로컬 LLM 연결 실패로 기본 안내를 사용했어요.)"
+          ? "(로컬 LLM 연결 실패로 실시간 DB 정보를 직접 검색하여 답변해 드렸습니다.)"
           : lang === "EN"
-            ? "(Used fallback because local LLM was unavailable.)"
+            ? "(Used real-time DB fallback because local LLM was unavailable.)"
             : lang === "ZH"
-              ? "(本地 LLM 连接失败,已使用默认指引。)"
-              : "(Đã dùng hướng dẫn mặc định vì không kết nối được LLM cục bộ.)";
+              ? "(本地 LLM 连接失败,已使用实时数据库指引。)"
+              : "(Đã dùng hướng dẫn thực tế vì không kết nối được LLM cục bộ.)";
+              
       setMessages((m) =>
         m.map((msg) =>
           msg.id === pendingId
-            ? { ...msg, text: reply.text + "\n\n" + suffix, showMap: reply.showMap, pending: false }
+            ? { ...msg, text: fallbackText + "\n\n" + suffix, showMap, pending: false }
             : msg,
         ),
       );
-      if (reply.showMap) setTimeout(() => setMapOpen(true), 400);
+      if (showMap) setTimeout(() => setMapOpen(true), 400);
     }
   };
 
@@ -410,7 +481,7 @@ function ChatPage() {
         {mapOpen && (
           <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md animate-in slide-in-from-bottom rounded-t-3xl border-t border-border bg-card p-5 shadow-float">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-bold text-foreground">📍 서점 지도</h3>
+              <h3 className="font-bold text-foreground">📍 도서관 지도</h3>
               <button onClick={() => setMapOpen(false)} aria-label="close">
                 <X className="size-5 text-muted-foreground" />
               </button>

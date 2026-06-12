@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .database import get_db
-from .models import AdminUser
+from .models import AdminUser, Member
 
 settings = get_settings()
 
 # tokenUrl is informational (used by Swagger UI); auth is via Bearer header.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/admin/auth/login", auto_error=False)
+oauth2_scheme_member = OAuth2PasswordBearer(tokenUrl="/api/member/auth/login", auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -64,3 +65,29 @@ def get_current_admin(
     if admin is None or not admin.is_active:
         raise cred_exc
     return admin
+
+
+def get_current_member(
+    token: str | None = Depends(oauth2_scheme_member),
+    db: Session = Depends(get_db),
+) -> Member:
+    cred_exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="인증 정보가 유효하지 않습니다. 다시 로그인해주세요.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if not token:
+        raise cred_exc
+    try:
+        payload = decode_token(token)
+        subject = payload.get("sub")
+        if subject is None:
+            raise cred_exc
+    except jwt.PyJWTError:
+        raise cred_exc
+
+    member = db.get(Member, int(subject))
+    if member is None or not member.is_active:
+        raise cred_exc
+    return member
+

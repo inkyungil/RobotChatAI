@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router';
 import { AppShell } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
-import { BOOKS } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { Book } from "@/lib/mock-data";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -9,7 +10,7 @@ const CATS = ["all", "fiction", "self", "foreign"] as const;
 type Cat = (typeof CATS)[number];
 
 export const Route = createFileRoute("/recommend")({
-  head: () => ({ meta: [{ title: "Labi Bot — 추천 랭킹" }] }),
+  head: () => ({ meta: [{ title: "Libi Bot — 추천 랭킹" }] }),
   component: Recommend,
 });
 
@@ -18,10 +19,19 @@ function Recommend() {
   const [cat, setCat] = useState<Cat>("all");
   const [open, setOpen] = useState<string | null>(null);
 
+  const { data: books = [], isLoading } = useQuery<Book[]>({
+    queryKey: ["books"],
+    queryFn: async () => {
+      const res = await fetch("/api/books");
+      if (!res.ok) throw new Error("Failed to fetch books");
+      return res.json();
+    },
+  });
+
   const filtered =
     cat === "all"
-      ? BOOKS
-      : BOOKS.filter((b) =>
+      ? books
+      : books.filter((b) =>
           cat === "self"
             ? b.category === "self" || b.category === "humanities"
             : b.category === cat,
@@ -33,6 +43,7 @@ function Recommend() {
     self: tr("catSelf"),
     foreign: tr("catForeign"),
   };
+
 
   return (
     <AppShell>
@@ -58,13 +69,20 @@ function Recommend() {
         </div>
 
         <ol className="mt-5 space-y-3">
-          {filtered.map((b, i) => {
-            const isOpen = open === b.id;
-            return (
-              <li
-                key={b.id}
-                className="overflow-hidden rounded-2xl border border-border bg-card shadow-card"
-              >
+          {isLoading ? (
+            <div className="space-y-3 py-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-20 w-full animate-pulse rounded-2xl bg-card border border-border" />
+              ))}
+            </div>
+          ) : (
+            filtered.map((b, i) => {
+              const isOpen = open === b.id;
+              return (
+                <li
+                  key={b.id}
+                  className="overflow-hidden rounded-2xl border border-border bg-card shadow-card"
+                >
                 <button
                   onClick={() => setOpen(isOpen ? null : b.id)}
                   className="flex w-full items-center gap-3 p-3 text-left"
@@ -111,7 +129,8 @@ function Recommend() {
                 )}
               </li>
             );
-          })}
+          })
+        )}
         </ol>
       </div>
     </AppShell>

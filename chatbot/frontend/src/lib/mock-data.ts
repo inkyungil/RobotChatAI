@@ -147,7 +147,7 @@ export const ZONES = [
 ];
 
 export const QUICK_CHIPS = {
-  KR: ["화장실 어디야?", "오늘 재고 있는 경제 서적", "외국어 서적 코너 위치", "위로가 되는 시집 추천해줘"],
+  KR: ["화장실 어디야?", "오늘 대출 가능한 경제 서적", "외국어 서적 코너 위치", "위로가 되는 시집 추천해줘"],
   EN: ["Where is the restroom?", "Economics books in stock", "Foreign language section", "Recommend a comforting poetry book"],
   ZH: ["洗手间在哪?", "今天有货的经济书", "外文书区位置", "推荐治愈的诗集"],
   VI: ["Nhà vệ sinh ở đâu?", "Sách kinh tế còn hàng", "Khu sách ngoại văn", "Gợi ý thơ chữa lành"],
