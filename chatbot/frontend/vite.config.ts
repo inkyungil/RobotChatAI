@@ -1,10 +1,17 @@
 import tailwindcss from "@tailwindcss/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), tsConfigPaths()],
+  plugins: [
+    // Must run before the React plugin so generated routes get transformed.
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
+    react(),
+    tailwindcss(),
+    tsConfigPaths(),
+  ],
   build: {
     outDir: "dist",
     emptyOutDir: true,
